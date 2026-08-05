@@ -1,0 +1,211 @@
+@extends('layouts.app')
+
+@php
+    use App\Models\Transaksi\UangCash;
+    use App\Models\Transaksi\UangCashMonitoring;
+    use Carbon\Carbon;
+
+    $userId = auth()->id();
+    $today = Carbon::today();
+
+    // Modal yang diberikan hari ini (dari monitoring)
+    $modalHariIni = UangCashMonitoring::where('user_id', $userId)
+        ->whereDate('created_at', $today)
+        ->orderBy('nominal', 'desc')
+        ->get();
+    $totalModal = $modalHariIni->sum(fn($i) => $i->nominal * $i->total);
+
+    // Data closing uang cash hari ini (yang user input)
+    $cashHariIni = UangCash::where('user_id', $userId)
+        ->whereDate('created_at', $today)
+        ->orderBy('nominal', 'desc')
+        ->get();
+    $totalCash = $cashHariIni->sum(fn($i) => $i->nominal * $i->total);
+@endphp
+
+@section('content')
+
+{{-- Info Modal Hari Ini --}}
+<div class="card" style="margin-bottom: 1.5rem; border-color: rgba(16,185,129,0.2);">
+    <div class="card-header" style="background: rgba(16,185,129,0.05);">
+        <h5 style="font-size: 0.9rem;">
+            <i class="bi bi-wallet2" style="color: #10b981; margin-right: 0.4rem;"></i> Modal Uang Cash Hari Ini
+        </h5>
+        <span style="font-size: 1.1rem; font-weight: 800; color: #34d399;">Rp {{ number_format($totalModal, 0, ',', '.') }}</span>
+    </div>
+    @if($modalHariIni->count() > 0)
+    <div class="card-body" style="padding: 0.8rem 1.5rem;">
+        <div style="display: flex; flex-wrap: wrap; gap: 0.8rem;">
+            @foreach($modalHariIni as $m)
+            <div style="padding: 0.5rem 1rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;">
+                <span style="color: #94a3b8; font-size: 0.75rem;">Rp {{ number_format($m->nominal, 0, ',', '.') }}</span>
+                <span style="color: #fbbf24; font-weight: 700; margin-left: 0.3rem;">× {{ $m->total }}</span>
+                <span style="color: #64748b; margin-left: 0.3rem; font-size: 0.75rem;">= Rp {{ number_format($m->nominal * $m->total, 0, ',', '.') }}</span>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @else
+    <div class="card-body" style="padding: 1rem 1.5rem;">
+        <p style="color: #64748b; margin: 0; font-size: 0.85rem;">Belum ada modal yang diberikan hari ini.</p>
+    </div>
+    @endif
+</div>
+
+{{-- Closing Form + Data --}}
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+    
+    {{-- Left: Form Input --}}
+    <div class="card">
+        <div class="card-header">
+            <h5 style="font-size: 0.9rem;"><i class="bi bi-plus-circle" style="color: var(--primary); margin-right: 0.4rem;"></i> Input Uang Cash Closing</h5>
+        </div>
+        <div class="card-body">
+            <form id="cashForm" method="POST" action="{{ url('uang-cash') }}">
+                @csrf
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="mb-3">
+                        <label class="form-label" style="color: #cbd5e1;">Pecahan <span class="text-danger">*</span></label>
+                        <select name="nominal" class="form-select" required>
+                            <option value="">-- Pilih --</option>
+                            <option value="1000">Rp 1.000</option>
+                            <option value="2000">Rp 2.000</option>
+                            <option value="5000">Rp 5.000</option>
+                            <option value="10000">Rp 10.000</option>
+                            <option value="20000">Rp 20.000</option>
+                            <option value="50000">Rp 50.000</option>
+                            <option value="100000">Rp 100.000</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="color: #cbd5e1;">Jumlah Lembar <span class="text-danger">*</span></label>
+                        <input type="number" name="total" class="form-control" placeholder="0" required min="0">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" style="color: #cbd5e1;">Cabang / Ruko</label>
+                    @if(auth()->user()->hasRole('admin'))
+                    <select name="cabang_toko" class="form-select">
+                        <option value="1">Ruko 1</option>
+                        <option value="2">Ruko 2</option>
+                        <option value="3">Ruko 3</option>
+                        <option value="4">Ruko 4</option>
+                        <option value="5">Ruko 5</option>
+                    </select>
+                    @else
+                    <input type="text" class="form-control" value="{{ auth()->user()->username }}" disabled style="background: rgba(255,255,255,0.06) !important; color: #94a3b8 !important; -webkit-text-fill-color: #94a3b8 !important; opacity: 1 !important;">
+                    <input type="hidden" name="cabang_toko" value="{{ auth()->user()->username }}">
+                    @endif
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                    <i class="bi bi-check-lg"></i> Simpan
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {{-- Right: Data Closing Hari Ini --}}
+    <div class="card">
+        <div class="card-header">
+            <h5 style="font-size: 0.9rem;"><i class="bi bi-cash-stack" style="color: #fbbf24; margin-right: 0.4rem;"></i> Cash Closing Hari Ini</h5>
+            <span style="font-size: 0.9rem; font-weight: 700; color: #34d399;">Rp {{ number_format($totalCash, 0, ',', '.') }}</span>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            @if($cashHariIni->count() > 0)
+            <table class="table" style="margin: 0; width: 100%;">
+                <thead>
+                    <tr>
+                        <th style="color: #94a3b8;">Pecahan</th>
+                        <th style="text-align: center; color: #94a3b8;">Jml</th>
+                        <th style="text-align: right; color: #94a3b8;">Subtotal</th>
+                        <th style="text-align: center; color: #94a3b8; width: 50px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($cashHariIni as $item)
+                    <tr>
+                        <td style="color: #f1f5f9;">Rp {{ number_format($item->nominal, 0, ',', '.') }}</td>
+                        <td style="text-align: center; color: #fbbf24; font-weight: 600;">{{ $item->total }}</td>
+                        <td style="text-align: right; color: #f1f5f9; font-weight: 600;">Rp {{ number_format($item->nominal * $item->total, 0, ',', '.') }}</td>
+                        <td style="text-align: center;">
+                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteCash({{ $item->id }})" title="Hapus">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr style="background: rgba(0,0,0,0.1);">
+                        <td style="font-weight: 700; color: #f1f5f9;">Total</td>
+                        <td style="text-align: center; font-weight: 700; color: #fbbf24;">{{ $cashHariIni->sum('total') }}</td>
+                        <td style="text-align: right; font-weight: 700; color: #34d399;">Rp {{ number_format($totalCash, 0, ',', '.') }}</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+            @else
+            <div style="padding: 3rem; text-align: center; color: #64748b;">
+                <i class="bi bi-inbox" style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem;"></i>
+                Belum ada input closing hari ini
+            </div>
+            @endif
+        </div>
+    </div>
+</div>
+@endsection
+
+@push('styles')
+<style>
+    @media (max-width: 768px) {
+        .content > div[style*="grid-template-columns: 1fr 1fr"] {
+            grid-template-columns: 1fr !important;
+        }
+    }
+</style>
+@endpush
+
+@push('scripts')
+<script>
+$('#cashForm').on('submit', function(e) {
+    e.preventDefault();
+    $.ajax({
+        url: $(this).attr('action'),
+        type: 'POST',
+        data: $(this).serialize(),
+        success: function(res) {
+            Swal.fire({ title: 'Berhasil!', text: res.message, icon: 'success', background: '#1e293b', color: '#f1f5f9', confirmButtonColor: '#3b82f6' }).then(function() { window.location.reload(); });
+        },
+        error: function(xhr) {
+            var errors = xhr.responseJSON?.errors || {};
+            var msg = Object.values(errors).flat().join('<br>') || 'Terjadi kesalahan';
+            Swal.fire({ title: 'Gagal', html: msg, icon: 'error', background: '#1e293b', color: '#f1f5f9' });
+        }
+    });
+});
+
+function deleteCash(id) {
+    Swal.fire({
+        title: 'Hapus data ini?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: '<i class="bi bi-trash3"></i> Hapus',
+        cancelButtonText: 'Batal',
+        background: '#1e293b',
+        color: '#f1f5f9',
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '{{ url("uang-cash") }}/' + id,
+                type: 'DELETE',
+                success: function(res) {
+                    Swal.fire({ title: 'Terhapus!', text: res.message, icon: 'success', background: '#1e293b', color: '#f1f5f9', confirmButtonColor: '#3b82f6' }).then(function() { window.location.reload(); });
+                }
+            });
+        }
+    });
+}
+</script>
+@endpush
