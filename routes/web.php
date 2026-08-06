@@ -6,6 +6,9 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\TransferFormController;
 use App\Http\Controllers\TunaiFormController;
 use App\Http\Controllers\KalkulatorController;
+use App\Http\Controllers\PengeluaranController;
+use App\Http\Controllers\InvestorController;
+use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\UangCashController;
 use App\Http\Controllers\UangCashMonitoringController;
 use App\Http\Controllers\RekeningValidController;
@@ -49,6 +52,31 @@ Route::middleware('auth')->group(function () {
 
     // Kalkulator - permission: kalkulator-view
     Route::get('/kalkulator', [KalkulatorController::class, 'index'])->middleware('can:kalkulator-view');
+    Route::get('/kalkulator/chart-data', [KalkulatorController::class, 'chartData'])->middleware('can:kalkulator-view');
+
+    // Pengeluaran Bulanan - permission: pengeluaran-view
+    Route::middleware('can:pengeluaran-view')->group(function () {
+        Route::get('/pengeluaran', [PengeluaranController::class, 'index']);
+        Route::post('/pengeluaran', [PengeluaranController::class, 'store']);
+        Route::put('/pengeluaran/{id}', [PengeluaranController::class, 'update']);
+        Route::delete('/pengeluaran/{id}', [PengeluaranController::class, 'destroy']);
+        Route::post('/pengeluaran/hitung-admin', [PengeluaranController::class, 'hitungAdmin']);
+        Route::post('/pengeluaran/get-banks', [PengeluaranController::class, 'getBanks']);
+    });
+
+    // Investor - permission: investor-view
+    Route::middleware('can:investor-view')->group(function () {
+        Route::get('/investor', [InvestorController::class, 'index']);
+        Route::post('/investor', [InvestorController::class, 'store']);
+        Route::put('/investor/{id}', [InvestorController::class, 'update']);
+        Route::delete('/investor/{id}', [InvestorController::class, 'destroy']);
+    });
+
+    // Laporan PDF - permission: investor-view (admin only)
+    Route::middleware('can:investor-view')->group(function () {
+        Route::get('/laporan', [LaporanController::class, 'index']);
+        Route::post('/laporan/generate', [LaporanController::class, 'generate']);
+    });
 
     // Uang Cash - permission: uang-cash-view
     Route::middleware('can:uang-cash-view')->group(function () {

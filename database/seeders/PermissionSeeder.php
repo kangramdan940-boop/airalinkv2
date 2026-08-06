@@ -18,6 +18,8 @@ class PermissionSeeder extends Seeder
             'transfer' => ['view', 'add', 'edit', 'delete'],
             'tunai' => ['view', 'add', 'edit', 'delete'],
             'kalkulator' => ['view'],
+            'pengeluaran' => ['view', 'add', 'edit', 'delete'],
+            'investor' => ['view', 'add', 'edit', 'delete'],
             'uang-cash' => ['view', 'add', 'edit', 'delete'],
             'uang-cash-monitoring' => ['view', 'add', 'edit', 'delete'],
             'transaksi-transfer' => ['view', 'add', 'edit', 'delete'],

@@ -3,9 +3,11 @@
 @php
     use App\Models\Transaksi\UangCash;
     use App\Models\Transaksi\UangCashMonitoring;
+    use App\Models\User;
     use Carbon\Carbon;
 
     $userId = auth()->id();
+    $isAdmin = auth()->user()->hasRole('admin');
     $today = Carbon::today();
 
     // Modal yang diberikan hari ini (dari monitoring)
@@ -21,6 +23,32 @@
         ->orderBy('nominal', 'desc')
         ->get();
     $totalCash = $cashHariIni->sum(fn($i) => $i->nominal * $i->total);
+
+    // Admin: data closing semua karyawan
+    $closingPerUser = [];
+    if ($isAdmin) {
+        $allUsers = User::role(['admin', 'user'])->get();
+        foreach ($allUsers as $u) {
+            $userCash = UangCash::where('user_id', $u->id)
+                ->whereDate('created_at', $today)
+                ->orderBy('nominal', 'desc')
+                ->get();
+            $userModal = UangCashMonitoring::where('user_id', $u->id)
+                ->whereDate('created_at', $today)
+                ->get();
+            $totalUserCash = $userCash->sum(fn($i) => $i->nominal * $i->total);
+            $totalUserModal = $userModal->sum(fn($i) => $i->nominal * $i->total);
+
+            if ($totalUserCash > 0 || $totalUserModal > 0) {
+                $closingPerUser[] = [
+                    'user' => $u,
+                    'items' => $userCash,
+                    'total_cash' => $totalUserCash,
+                    'total_modal' => $totalUserModal,
+                ];
+            }
+        }
+    }
 @endphp
 
 @section('content')
@@ -153,10 +181,85 @@
         </div>
     </div>
 </div>
+
+{{-- Admin: Closing Semua Karyawan --}}
+@if($isAdmin && count($closingPerUser) > 0)
+<div style="margin-top: 2rem;">
+    <div style="font-size: 0.85rem; font-weight: 600; color: #94a3b8; margin-bottom: 1rem;">
+        <i class="bi bi-people-fill" style="margin-right: 0.3rem;"></i> Uang Closing Karyawan Hari Ini
+    </div>
+    <div class="closing-grid">
+        @foreach($closingPerUser as $data)
+        <div class="card">
+            <div class="card-header">
+                <h5 style="font-size: 0.9rem;">
+                    <i class="bi bi-person-circle" style="color: #60a5fa; margin-right: 0.4rem;"></i>
+                    {{ $data['user']->username }}
+                </h5>
+                <div style="text-align: right;">
+                    <div style="font-size: 0.7rem; color: #94a3b8;">Modal / Closing</div>
+                    <span style="font-size: 0.82rem; font-weight: 700; color: #34d399;">{{ number_format($data['total_modal'], 0, ',', '.') }}</span>
+                    <span style="color: #64748b; margin: 0 0.2rem;">/</span>
+                    <span style="font-size: 0.82rem; font-weight: 700; color: #fbbf24;">{{ number_format($data['total_cash'], 0, ',', '.') }}</span>
+                </div>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                @if($data['items']->count() > 0)
+                <table class="table" style="margin: 0; width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="color: #94a3b8;">Pecahan</th>
+                            <th style="text-align: center; color: #94a3b8;">Jml</th>
+                            <th style="text-align: right; color: #94a3b8;">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($data['items'] as $item)
+                        <tr>
+                            <td style="color: #f1f5f9;">Rp {{ number_format($item->nominal, 0, ',', '.') }}</td>
+                            <td style="text-align: center; color: #fbbf24; font-weight: 600;">{{ $item->total }}</td>
+                            <td style="text-align: right; color: #f1f5f9; font-weight: 600;">Rp {{ number_format($item->nominal * $item->total, 0, ',', '.') }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: rgba(0,0,0,0.1);">
+                            <td style="font-weight: 700; color: #f1f5f9;">Total Closing</td>
+                            <td style="text-align: center; font-weight: 700; color: #fbbf24;">{{ $data['items']->sum('total') }}</td>
+                            <td style="text-align: right; font-weight: 700; color: #34d399;">Rp {{ number_format($data['total_cash'], 0, ',', '.') }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+                @else
+                <div style="padding: 1.5rem; text-align: center; color: #64748b; font-size: 0.82rem;">
+                    Belum input closing
+                </div>
+                @endif
+            </div>
+            {{-- Selisih --}}
+            @php $selisih = $data['total_modal'] - $data['total_cash']; @endphp
+            <div style="padding: 0.6rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.75rem; color: #94a3b8;">Selisih (Modal - Closing)</span>
+                <span style="font-weight: 700; color: {{ $selisih == 0 ? '#34d399' : ($selisih > 0 ? '#fbbf24' : '#ef4444') }};">
+                    {{ $selisih >= 0 ? '+' : '' }}Rp {{ number_format($selisih, 0, ',', '.') }}
+                </span>
+            </div>
+        </div>
+        @endforeach
+    </div>
+</div>
+@endif
+
 @endsection
 
 @push('styles')
 <style>
+    .closing-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+    @media (max-width: 1024px) { .closing-grid { grid-template-columns: 1fr; } }
     @media (max-width: 768px) {
         .content > div[style*="grid-template-columns: 1fr 1fr"] {
             grid-template-columns: 1fr !important;

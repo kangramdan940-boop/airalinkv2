@@ -5,6 +5,8 @@
     use App\Models\Transaksi\Tunai;
     use App\Models\Transaksi\Limit;
     use App\Models\Transaksi\Tabungan;
+    use App\Models\Transaksi\UangCashMonitoring;
+    use App\Models\Transaksi\UangCash;
     use App\Models\User;
     use Carbon\Carbon;
 
@@ -22,12 +24,18 @@
         $totalTunai = $tunais->sum('nominal');
 
         if ($totalTransfer > 0 || $totalTunai > 0) {
-            $limitData = Limit::where('user_id', $user->id)->first();
-            $limitHarian = $limitData ? (double) $limitData->limit : 0;
+            // Uang Ketika Buka = sum(nominal * total) dari uang-cash-monitoring hari ini
+            $monitorings = UangCashMonitoring::where('user_id', $user->id)
+                ->whereDate('created_at', $today)
+                ->get();
+            $uangBuka = $monitorings->sum(fn($i) => $i->nominal * $i->total);
 
-            $uangBuka = $limitHarian;
-            $uangClosing = $totalTunai;
-            $uangSisa = $limitHarian - $totalTransfer;
+            // Uang Closing = sum(nominal * total) dari uang-cash (input closing karyawan)
+            $cashClosing = UangCash::where('user_id', $user->id)
+                ->whereDate('created_at', $today)
+                ->get();
+            $uangClosing = $cashClosing->sum(fn($i) => $i->nominal * $i->total);
+            $uangSisa = $uangBuka + $totalTransfer - $totalTunai;
             $selisih = $uangSisa - $uangClosing;
 
             $karyawanAktif[] = [
@@ -54,7 +62,7 @@
 {{-- Title --}}
 <div style="text-align: center; margin-bottom: 2.5rem;">
     <h2 style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px;">
-        LAPORAN PERTANGGUNG JAWABAN TOKO dan <a href="#" style="color: #ef4444; text-decoration: none;">Tabungan</a>
+        LAPORAN PERTANGGUNG JAWABAN TOKO
     </h2>
 </div>
 

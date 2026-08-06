@@ -674,6 +674,24 @@
             </a>
             @endcan
 
+            @can('pengeluaran-view')
+            <a href="{{ url('/pengeluaran') }}" class="nav-item {{ request()->is('pengeluaran') ? 'active' : '' }}">
+                <i class="bi bi-cash-coin"></i> Pengeluaran
+            </a>
+            @endcan
+
+            @can('investor-view')
+            <a href="{{ url('/investor') }}" class="nav-item {{ request()->is('investor') ? 'active' : '' }}">
+                <i class="bi bi-graph-up-arrow"></i> Investor
+            </a>
+            @endcan
+
+            @can('investor-view')
+            <a href="{{ url('/laporan') }}" class="nav-item {{ request()->is('laporan') ? 'active' : '' }}">
+                <i class="bi bi-file-earmark-pdf"></i> Laporan
+            </a>
+            @endcan
+
             @can('uang-cash-view')
             <a href="{{ url('/uang-cash') }}" class="nav-item {{ request()->is('uang-cash') ? 'active' : '' }}">
                 <i class="bi bi-wallet2"></i> Uang Cash
