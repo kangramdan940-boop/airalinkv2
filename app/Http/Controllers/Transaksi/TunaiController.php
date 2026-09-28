@@ -58,7 +58,7 @@ class TunaiController extends Controller
             ->addColumn('username', fn($r) => $r->user?->username ?? '-')
             ->editColumn('nominal', fn($r) => 'Rp ' . number_format($r->nominal, 0, ',', '.'))
             ->editColumn('status', function ($r) {
-                if ($r->status == 1 && $r->file) {
+                if ($r->file) {
                     $url = asset($r->file);
                     return '<a href="' . $url . '" target="_blank" class="badge bg-info text-decoration-none">Bukti Tf</a>';
                 }

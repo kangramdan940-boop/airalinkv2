@@ -48,6 +48,21 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Edit -->
+<div class="modal fade" id="formModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Edit Transfer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalBody"></div>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -55,6 +70,8 @@
 <script>
 var dataTable;
 var pageUrl = '{{ url($pageUrl) }}';
+var baseUrl = pageUrl.replace(/\/+$/, '');
+var modal = new bootstrap.Modal(document.getElementById('formModal'));
 
 $(function() {
     dataTable = $('#dataTable').DataTable({
@@ -91,6 +108,53 @@ $(function() {
         startPicker.clear();
         endPicker.clear();
         dataTable.ajax.reload();
+    });
+
+    // Edit button -> load form into modal
+    $(document).on('click', '.btn-edit', function() {
+        var id = $(this).data('id');
+        $.get(baseUrl + '/' + id + '/edit')
+            .done(function(html) {
+                var content = $(html).find('#modalBody').html();
+                $('#modalBody').html(content || html);
+                $('#modalTitle').text('Edit Transfer');
+                modal.show();
+            })
+            .fail(function() {
+                Swal.fire({ title: 'Error!', text: 'Gagal memuat formulir.', icon: 'error', background: '#1e293b', color: '#f1f5f9' });
+            });
+    });
+
+    // Modal form submit (update)
+    $(document).on('submit', '#formModal form', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        var formData = new FormData(this);
+        if (formData.get('nominal')) formData.set('nominal', formData.get('nominal').replace(/,/g, ''));
+        if (formData.get('admin')) formData.set('admin', formData.get('admin').replace(/,/g, ''));
+
+        $.ajax({
+            url: form.attr('action'),
+            type: form.attr('method') || 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(res) {
+                modal.hide();
+                Swal.fire({ title: 'Berhasil!', text: res.message || 'Data berhasil disimpan.', icon: 'success', background: '#1e293b', color: '#f1f5f9', confirmButtonColor: '#3b82f6' });
+                dataTable.ajax.reload();
+            },
+            error: function(xhr) {
+                var errors = xhr.responseJSON?.errors || {};
+                var msg = Object.values(errors).flat().join('<br>') || xhr.responseJSON?.message || 'Terjadi kesalahan.';
+                Swal.fire({ title: 'Validasi Gagal', html: msg, icon: 'error', background: '#1e293b', color: '#f1f5f9' });
+            }
+        });
+    });
+
+    // Clear modal body on close
+    $('#formModal').on('hidden.bs.modal', function() {
+        $('#modalBody').html('');
     });
 });
 
