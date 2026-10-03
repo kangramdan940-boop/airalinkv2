@@ -17,6 +17,7 @@ use App\Http\Controllers\Transaksi\TransferController;
 use App\Http\Controllers\Transaksi\TunaiController;
 use App\Http\Controllers\Konfigurasi\UsersController;
 use App\Http\Controllers\Konfigurasi\RolesController;
+use App\Http\Controllers\ClosingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -94,6 +95,15 @@ Route::middleware('auth')->group(function () {
         Route::put('/uang-cash-monitoring/{id}', [UangCashMonitoringController::class, 'update']);
         Route::delete('/uang-cash-monitoring/{id}', [UangCashMonitoringController::class, 'destroy']);
     });
+
+    // Closing Brilink
+    Route::get('/closing', [ClosingController::class, 'index']);
+    Route::get('/closing/api/accounts', [ClosingController::class, 'apiAccounts']);
+    Route::get('/closing/api/shops', [ClosingController::class, 'apiShops']);
+    Route::get('/closing/api/by-date/{date}', [ClosingController::class, 'apiByDate']);
+    Route::post('/closing/api/closings', [ClosingController::class, 'apiStore']);
+    Route::get('/closing/api/closings', [ClosingController::class, 'apiList']);
+    Route::get('/closing/api/closings/{id}', [ClosingController::class, 'apiShow']);
 
     // Transaksi Bank - permission per module
     Route::prefix('transaksi')->group(function () {
