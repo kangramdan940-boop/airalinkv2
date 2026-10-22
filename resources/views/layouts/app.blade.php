@@ -686,6 +686,12 @@
             </a>
             @endcan
 
+            @if(auth()->user()?->username === 'ramdan')
+            <a href="{{ url('/rekap-pengeluaran') }}" class="nav-item {{ request()->is('rekap-pengeluaran*') ? 'active' : '' }}">
+                <i class="bi bi-journal-text"></i> Rekap Pengeluaran
+            </a>
+            @endif
+
             @can('investor-view')
             <a href="{{ url('/investor') }}" class="nav-item {{ request()->is('investor') ? 'active' : '' }}">
                 <i class="bi bi-graph-up-arrow"></i> Investor

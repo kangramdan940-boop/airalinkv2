@@ -18,12 +18,25 @@ use App\Http\Controllers\Transaksi\TunaiController;
 use App\Http\Controllers\Konfigurasi\UsersController;
 use App\Http\Controllers\Konfigurasi\RolesController;
 use App\Http\Controllers\ClosingController;
+use App\Http\Controllers\PengeluaranHarianController;
+use App\Http\Controllers\RekapPengeluaranController;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
 */
+
+// Pengeluaran Harian (akses tanpa login, pakai PIN)
+Route::prefix('pengeluaran-harian')->group(function () {
+    Route::get('/', [PengeluaranHarianController::class, 'index']);
+    Route::post('/pin', [PengeluaranHarianController::class, 'verifyPin']);
+    Route::post('/keluar', [PengeluaranHarianController::class, 'logout']);
+    Route::get('/data', [PengeluaranHarianController::class, 'data']);
+    Route::post('/', [PengeluaranHarianController::class, 'store']);
+    Route::put('/{id}', [PengeluaranHarianController::class, 'update']);
+    Route::delete('/{id}', [PengeluaranHarianController::class, 'destroy']);
+});
 
 // Redirect root to home
 Route::get('/', fn() => redirect('/home'));
@@ -54,6 +67,11 @@ Route::middleware('auth')->group(function () {
     // Kalkulator - permission: kalkulator-view
     Route::get('/kalkulator', [KalkulatorController::class, 'index'])->middleware('can:kalkulator-view');
     Route::get('/kalkulator/chart-data', [KalkulatorController::class, 'chartData'])->middleware('can:kalkulator-view');
+
+    // Rekap Pengeluaran (khusus ramdan, PIN 444444)
+    Route::get('/rekap-pengeluaran', [RekapPengeluaranController::class, 'index']);
+    Route::post('/rekap-pengeluaran/pin', [RekapPengeluaranController::class, 'verifyPin']);
+    Route::get('/rekap-pengeluaran/chart-data', [RekapPengeluaranController::class, 'chartData']);
 
     // Pengeluaran Bulanan - permission: pengeluaran-view
     Route::middleware('can:pengeluaran-view')->group(function () {
