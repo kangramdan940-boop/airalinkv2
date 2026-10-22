@@ -23,7 +23,7 @@ class TransferRequest extends FormRequest
                 'cabang_toko' => 'nullable|string|max:100',
                 'keterangan' => 'required|string',
                 'whatsapp' => 'nullable|string|max:20',
-                'file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+                'file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:20480',
             ];
         }
 
@@ -36,7 +36,7 @@ class TransferRequest extends FormRequest
             'cabang_toko' => 'nullable|string|max:100',
             'keterangan' => 'nullable|string',
             'whatsapp' => 'nullable|string|max:20',
-            'file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:20480',
         ];
     }
 

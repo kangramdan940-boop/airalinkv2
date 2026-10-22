@@ -48,7 +48,7 @@ class TunaiFormController extends Controller
             'atas_nama' => 'nullable|string',
             'nominal' => 'required|numeric|min:1',
             'admin' => 'required|numeric|min:0',
-            'file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:20480',
         ]);
 
         $userId = Auth::id();

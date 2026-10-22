@@ -22,7 +22,7 @@ class TunaiRequest extends FormRequest
                 'admin' => 'required|numeric|min:0',
                 'cabang_toko' => 'nullable|string|max:100',
                 'keterangan' => 'nullable|string',
-                'file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+                'file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:20480',
             ];
         }
 
@@ -34,7 +34,7 @@ class TunaiRequest extends FormRequest
             'admin' => 'nullable|numeric|min:0',
             'cabang_toko' => 'nullable|string|max:100',
             'keterangan' => 'nullable|string',
-            'file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:20480',
         ];
     }
 
