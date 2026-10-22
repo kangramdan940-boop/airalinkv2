@@ -105,8 +105,6 @@
         }
         .pin-key:active { background: rgba(59,130,246,0.2); transform: scale(0.96); }
         .pin-key.ghost { background: transparent; border-color: transparent; font-size: 1.1rem; color: var(--text-secondary); }
-        .pin-hint { margin-top: 1.8rem; font-size: 0.72rem; color: var(--text-muted); text-align: center; line-height: 1.6; }
-        .pin-hint b { color: var(--text-secondary); }
 
         /* ===== MAIN SCREEN ===== */
         .topbar {
@@ -339,11 +337,6 @@
         <button type="button" class="pin-key ghost" data-key="clear">C</button>
         <button type="button" class="pin-key" data-key="0">0</button>
         <button type="button" class="pin-key ghost" data-key="back"><i class="bi bi-backspace"></i></button>
-    </div>
-
-    <div class="pin-hint">
-        PIN <b>222222</b> — catat pengeluaran (hari ini)<br>
-        PIN <b>444444</b> — admin: pilih tanggal, ubah &amp; hapus
     </div>
 </div>
 
